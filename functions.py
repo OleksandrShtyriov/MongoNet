@@ -1,5 +1,6 @@
 from os import path
 from datetime import datetime
+import json
 
 from constants import *
 
@@ -235,4 +236,34 @@ def comment_to_str(comment: dict) -> str:
 
 def get_comments(col_comments, post) -> list:
     return list(col_comments.find({"post": post}))
+
+def to_hash(comments) -> None:
+    if not len(comments):
+        return
+
+    id = str(comments[0]['post']['_id'])
+    comms = dict()
+    for i in range(len(comments)):
+        comms[i] = {'id': str(comments[i]['_id']), 'text': comments[i]['text'], 
+                    'user': str(comments[i]['user']['_id'])}
+        comms[i] = json.dumps(comms[i])
+
+    r.set(id, json.dumps(comms), ex=600)
+
+def from_hash(col_users, post) -> list:
+    comments = r.get(str(post['_id']))
+    comments = json.loads(comments)
+
+    result = []
+    for (_, value) in comments.items():
+        value = json.loads(value)
+        result.append({'_id': value['id'], 'text': value['text'], 'post': post,
+                       'user': find_user_by_id(col_users, value['user'])})
+
+    return result
+
+def find_user_by_id(col_users, idx):
+    for user in col_users.find():
+        if str(user['_id']) == idx:
+            return user
 

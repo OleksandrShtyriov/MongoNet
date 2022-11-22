@@ -169,13 +169,16 @@ def main_screen(col_users, col_posts, col_reacts,
     window.title("Mongonet")
 
     posts_raw = col_posts.find().sort("time", -1)
+
     posts = posts_to_str(col_posts)
     i = 0
+
+    post = posts_raw[i]
 
     lbl_post = tk.Label(text=posts[i])
     lbl_post.place(relx=0.5, rely=0.5, anchor="center")
 
-    lbl_react = tk.Label(text=get_reacts_str(col_reacts, posts_raw[i]))
+    lbl_react = tk.Label(text=get_reacts_str(col_reacts, post))
     lbl_react.pack(side=tk.BOTTOM)
 
     def hide():
@@ -193,9 +196,10 @@ def main_screen(col_users, col_posts, col_reacts,
         nonlocal i
 
         i += 1
+        post = posts_raw[i]
         lbl_post.config(text=posts[i])
 
-        lbl_react.config(text=get_reacts_str(col_reacts, posts_raw[i]))
+        lbl_react.config(text=get_reacts_str(col_reacts, post))
 
         if i == 1:
             btn_prev.pack(side=tk.LEFT)
@@ -683,7 +687,13 @@ def comment_screen(col_users, col_posts, col_reacts,
                    col_friend_req, col_friends,
                    col_comments, col_comment_reacts,
                    window, user, post):
-    comments_raw = get_comments(col_comments, post)
+
+    if r.get(str(post['_id'])):
+        comments_raw = from_hash(col_users, post)
+    else:
+        comments_raw = get_comments(col_comments, post)
+        to_hash(list(comments_raw))
+
     comments = list(map(comment_to_str, comments_raw))
 
     i = 0
